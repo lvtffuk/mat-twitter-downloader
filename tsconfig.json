@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "sourceMap": true,
+        "declaration": true,
+        "target": "es6",
+        "lib": [
+            "es6"
+        ],
+        "plugins": [
+            {
+                "name": "typescript-tslint-plugin",
+                "alwaysShowRuleFailuresAsWarnings": true,
+                "ignoreDefinitionFiles": true,
+                "configFile": "./tslint.json",
+                "suppressWhileTypeErrorsPresent": false
+            }
+        ],
+		"experimentalDecorators": true,
+		"esModuleInterop": true
+    },
+    "exclude": [
+        "./__tests__", "./dist"
+    ]
+}

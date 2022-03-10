@@ -1,0 +1,84 @@
+{
+	"extends": "tslint:recommended",
+	"rulesDirectory": [
+		"src/"
+	],
+	"rules": {
+		"max-line-length": {
+			"options": [
+				120
+			]
+		},
+		"new-parens": true,
+		"no-arg": true,
+		"no-bitwise": true,
+		"no-conditional-assignment": true,
+		"no-consecutive-blank-lines": false,
+		"no-console": {
+			"severity": "warning",
+			"options": [
+				"debug",
+				"info",
+				"log",
+				"time",
+				"timeEnd",
+				"trace"
+			]
+		},
+		"quotemark": [
+			true,
+			"single",
+			"jsx-double"
+		],
+		"array-type": false,
+		"variable-name": {
+			"options": [
+				"ban-keywords",
+				"check-format",
+				"allow-leading-underscore",
+				"allow-pascal-case",
+				"allow-snake-case"
+			]
+		},
+		"indent": [
+			true,
+			"tabs",
+			4
+		],
+		"member-ordering": [
+			true,
+			{
+				"order": [
+					"public-static-field",
+					"protected-static-field",
+					"private-static-field",
+					"public-static-method",
+					"protected-static-method",
+					"private-static-method",
+					"public-instance-field",
+					"protected-instance-field",
+					"private-instance-field",
+					"public-constructor",
+					"private-constructor",
+					"public-instance-method",
+					"protected-instance-method",
+					"private-instance-method"
+				]
+			}
+		],
+		"ordered-imports": true,
+		"member-access": true,
+		"eofline": true,
+		"trailing-comma": true,
+		"semicolon": true
+	},
+	"jsRules": {
+		"no-empty": true,
+		"max-line-length": {
+			"options": [
+				120
+			]
+		}
+	},
+	"allowJs": true
+}

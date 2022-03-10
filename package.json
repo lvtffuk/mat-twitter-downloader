@@ -1,0 +1,49 @@
+{
+	"name": "mat-twitter-downloader",
+	"version": "0.1.0",
+	"description": "",
+	"main": "index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"create_index": "run-script-os",
+		"create_index:win32": "echo module.exports = require('./dist'); > index.js",
+		"create_index:linux:darwin": "echo \"module.exports = require('./dist');\" > index.js",
+		"build_ts": "./node_modules/.bin/tsc && npm run create_index",
+		"clear": "run-script-os",
+		"clear:win32": "(if exist .\\dist rd /s /q .\\dist) && del /q .\\index.js 2>nul",
+		"clear:linux:darwin": "rm -rf ./dist && rm -f ./index.js",
+		"clear_docs": "run-script-os",
+		"clear_docs:win32": "if exist .\\docs rd /s /q .\\docs",
+		"clear_docs:linux:darwin": "rm -rf ./docs",
+		"create_nojekyll": "run-script-os",
+		"create_nojekyll:win32": "type nul > ./docs/.nojekyll",
+		"create_nojekyll:linux:darwin": "touch ./docs/.nojekyll",
+		"docs_generate": "./node_modules/.bin/typedoc --out docs ./src",
+		"docs": "npm run clear_docs && npm run docs_generate && npm run create_nojekyll",
+		"test": "./node_modules/.bin/mocha -r ts-node/register -r dotenv/config __tests__/**/*.ts",
+		"start": "npm run clear && npm run build_ts && node -r source-map-support/register -r dotenv/config index.js",
+		"prepublish": "npm run clear && npm run build_ts",
+		"postpublish": "npm run clear"
+	},
+	"author": "Lukas Macuda <lukas.macuda@gmail.com>",
+	"license": "MIT",
+	"engines": {
+		"node": ">=12"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"@types/chai": "^4.3.0",
+		"@types/core-js": "^2.5.5",
+		"@types/mocha": "^9.1.0",
+		"@types/node": "^12.20.43",
+		"chai": "^4.3.6",
+		"dotenv": "^16.0.0",
+		"mocha": "^9.2.0",
+		"run-script-os-fix": "^1.0.4",
+		"source-map-support": "^0.5.21",
+		"ts-node": "^10.5.0",
+		"tslint": "^6.1.3",
+		"typedoc": "^0.22.11",
+		"typescript": "^4.5.5"
+	}
+}
