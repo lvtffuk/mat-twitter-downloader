@@ -2,3 +2,9 @@
 /dist
 /index.js
 /.env
+
+# Test dirs
+/input
+/output
+# TMP dir
+/tmp
