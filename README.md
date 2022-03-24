@@ -35,6 +35,8 @@ First line is header.
 The `app` is app ID from [developer portal](https://developer.twitter.com/en/portal/dashboard).  
 The access token can be also retrieved in the developer portal in the project section.
 
+The rate limit of the accessing the followers / followings is 15 requests per 15 minutes. Large profiles should be downloaded with large amount of valid tokens.
+
 ### Profile list
 The profile list is simple `csv` file with one column
 #### Example
