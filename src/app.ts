@@ -1,3 +1,4 @@
+import { randomNumber } from 'mat-utils';
 import { TwitterApiReadOnly } from 'twitter-api-v2';
 import { EData } from './typings/enums';
 
@@ -30,7 +31,7 @@ export default class App {
 	}
 
 	public getToken(): string {
-		return this.tokens[0]; // TODO random?
+		return this.tokens[randomNumber(0, this.tokens.length - 1)];
 	}
 
 	public getAvailableIn(dataType: EData): number {
