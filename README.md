@@ -1,5 +1,5 @@
 # mat-twitter-downloader
-Downloader for Twitter ads archive for Media Analytics Tool project.
+Downloader for Twitter data for Media Analytics Tool project.
 
 ## Development
 ### Installation & test run
