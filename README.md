@@ -16,10 +16,11 @@ Variable | Description | Required | Default value
 `TOKENS_FILE_PATH` | The filepath of the `csv` file with access tokens. | :heavy_check_mark: | 
 `PROFILES_FILE_PATH` | The filepath of the `csv` file with profile list. | :heavy_check_mark: | 
 `OUT_DIR` | The directory where the output is stored. | :heavy_check_mark: | 
+`WORKERS` | Worker names separated by commas. Possible values: `tweets`, `followers`, `followings` | :x: |
 `CSV_SEPARATOR` | The separator of the input `csv` files. | :x: | `;`
 `WORKER_CONCURRENCY` | The count of parallel runs of the downloading ads archive. | :x: | `5`
 `CLEAR` | Indicates if the output dir should be cleared before the run. All downloads are starting again. | :x: | `0`
-`IGNORE_USERS` | Indicates if the app should download only tweets. | :x: | `0`
+`IGNORE_USERS` | Indicates if the app should download only tweets. **DEPRECATED** Equivalent of `WORKERS=tweets` | :x: | `0`
 
 ## Input files
 ### Twitter tokens

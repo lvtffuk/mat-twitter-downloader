@@ -1,3 +1,9 @@
+let workers = null;
+if (process.env.IGNORE_USERS) {
+	workers = ['tweets'];
+} else if (process.env.WORKERS) {
+	workers = process.env.WORKERS.split(',');
+}
 module.exports = {
 	tokensFilePath: process.env.TOKENS_FILE_PATH,
 	outDir: process.env.OUT_DIR,
@@ -13,7 +19,5 @@ module.exports = {
 	clear: process.env.CLEAR
 		? !!parseInt(process.env.CLEAR, 10)
 		: false,
-	ignoreUsers: process.env.IGNORE_USERS
-		? !!parseInt(process.env.IGNORE_USERS, 10)
-		: false,
+	workers,
 };

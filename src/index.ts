@@ -1,13 +1,13 @@
-import config from 'config';
 import Downloader from './downloader';
 import Friends from './friends';
+import { EData } from './typings/enums';
 
 (async () => {
 	try {
 		await Downloader.init();
 		await Downloader.start();
 		await Downloader.exit();
-		if (!config.get('ignoreUsers')) {
+		if (Downloader.isWorkerEnabled(EData.FOLLOWERS) && Downloader.isWorkerEnabled(EData.FOLLOWINGS)) {
 			await Friends.merge();
 		}
 	} catch (error) {

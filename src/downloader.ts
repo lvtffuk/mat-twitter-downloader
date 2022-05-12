@@ -4,7 +4,7 @@ import { createWriteStream, promises as fs, WriteStream } from 'fs';
 import { sleep } from 'mat-utils';
 import { createClient, RedisClientType } from 'redis';
 import App from './app';
-import { LIMIT_TWEETS, LIMIT_USERS, RATE_LIMIT_TWEETS, RATE_LIMIT_USERS } from './constants';
+import { LIMIT_TWEETS, LIMIT_USERS, RATE_LIMIT_TWEETS, RATE_LIMIT_USERS, WORKERS } from './constants';
 import CSV from './csv';
 import Logger from './logger';
 import TokenPool from './token-pool';
@@ -89,13 +89,22 @@ export default class Downloader {
 		};
 	}
 
+	public static isWorkerEnabled(worker: EData): boolean {
+		return this.getWorkers().includes(worker);
+	}
+
+	public static getWorkers(): EData[] {
+		if (config.get('workers')) {
+			return config.get('workers');
+		}
+		return WORKERS;
+	}
+
 	public static async start(): Promise<void> {
 		await Promise.all([
 			this._startQueue(EData.TWEETS, TweetsWorker),
-			...!config.get('ignoreUsers') ? [
-				this._startQueue(EData.FOLLOWERS, FollowersWorker),
-				this._startQueue(EData.FOLLOWINGS, FollowingsWorker),
-			] : [],
+			this._startQueue(EData.FOLLOWERS, FollowersWorker),
+			this._startQueue(EData.FOLLOWINGS, FollowingsWorker),
 		]);
 	}
 
@@ -254,6 +263,10 @@ export default class Downloader {
 		Worker: new (data: T) => BaseWorker<T>,
 		transformWorkerData: (username: string) => T = (username) => ({ username } as T),
 	): Promise<void> {
+		if (!this.isWorkerEnabled(dataType)) {
+			this._log('worker', dataType, 'DISABLED');
+			return;
+		}
 		const queue = this._queues[dataType];
 		return new Promise((resolve, reject) => {
 			queue
@@ -357,8 +370,10 @@ export default class Downloader {
 		const tweetsPerHour = 4 * RATE_LIMIT_TWEETS * tokens;
 		const usersPerHour = (4 * RATE_LIMIT_USERS * tokens);
 		this._log('estimation', 'Tweets', `(${tweets}) ${(tweetsRequests / tweetsPerHour).toFixed(3)} hours`);
-		if (!config.get('ignoreUsers')) {
+		if (this.isWorkerEnabled(EData.FOLLOWERS)) {
 			this._log('estimation', 'Followers', `(${followers}) ${(followersRequests / usersPerHour).toFixed(3)} hours`);
+		}
+		if (this.isWorkerEnabled(EData.FOLLOWINGS)) {
 			this._log('estimation', 'Followings', `(${followings}) ${(followingsRequests / usersPerHour).toFixed(3)} hours`);
 		}
 	}
