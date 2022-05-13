@@ -20,6 +20,7 @@ Variable | Description | Required | Default value
 `CSV_SEPARATOR` | The separator of the input `csv` files. | :x: | `;`
 `WORKER_CONCURRENCY` | The count of parallel runs of the downloading ads archive. | :x: | `5`
 `CLEAR` | Indicates if the output dir should be cleared before the run. All downloads are starting again. | :x: | `0`
+`USER_COUNT` | Total count of user on the twitter segment. | :x: | `500000`
 `IGNORE_USERS` | Indicates if the app should download only tweets. **DEPRECATED** Equivalent of `WORKERS=tweets` | :x: | `0`
 
 ## Input files
@@ -50,12 +51,14 @@ The profile list is simple `csv` file with one column
 First line is header.  
 
 ## Output
-The output is stored in `csv` in the output directory.  
+The output is stored in `csv` files in the output directory.  
 File | Description
 :------------ | :-------------
 `tweets.csv` | Latest tweets of the users.
 `followers.csv` | The followers of the users.
+`followers.nsd.csv` | Calculated normalized social distance for followers.
 `followings.csv` | Followings of the users.
+`followings.nsd.csv` | Calculated normalized social distance for followings.
 `friends.csv` | Users following each other.
 
 ## Docker

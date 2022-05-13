@@ -20,4 +20,7 @@ module.exports = {
 		? !!parseInt(process.env.CLEAR, 10)
 		: false,
 	workers,
+	userCount: process.env.USER_COUNT
+		? parseInt(process.env.USER_COUNT, 10)
+		: 500000,
 };

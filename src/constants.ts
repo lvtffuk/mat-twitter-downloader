@@ -11,3 +11,9 @@ export const WORKERS: EData[] = [
 	EData.FOLLOWERS,
 	EData.FOLLOWINGS,
 ];
+
+export const OUTPUT_FILENAMES: Record<EData, string> = {
+	[EData.TWEETS]: 'tweets.csv',
+	[EData.FOLLOWERS]: 'followers.csv',
+	[EData.FOLLOWINGS]: 'followings.csv',
+};

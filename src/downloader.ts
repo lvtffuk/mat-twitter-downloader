@@ -4,7 +4,7 @@ import { createWriteStream, promises as fs, WriteStream } from 'fs';
 import { sleep } from 'mat-utils';
 import { createClient, RedisClientType } from 'redis';
 import App from './app';
-import { LIMIT_TWEETS, LIMIT_USERS, RATE_LIMIT_TWEETS, RATE_LIMIT_USERS, WORKERS } from './constants';
+import { LIMIT_TWEETS, LIMIT_USERS, OUTPUT_FILENAMES, RATE_LIMIT_TWEETS, RATE_LIMIT_USERS, WORKERS } from './constants';
 import CSV from './csv';
 import Logger from './logger';
 import TokenPool from './token-pool';
@@ -75,15 +75,15 @@ export default class Downloader {
 		]);
 		this._writeStreams = {
 			[EData.TWEETS]: createWriteStream(
-				this.getOutDirPath('tweets.csv'),
+				this.getOutDirPath(this.getOutputFilename(EData.TWEETS)),
 				{ flags: 'a' },
 			),
 			[EData.FOLLOWERS]: createWriteStream(
-				this.getOutDirPath('followers.csv'),
+				this.getOutDirPath(this.getOutputFilename(EData.FOLLOWERS)),
 				{ flags: 'a' },
 			),
 			[EData.FOLLOWINGS]: createWriteStream(
-				this.getOutDirPath('followings.csv'),
+				this.getOutDirPath(this.getOutputFilename(EData.FOLLOWINGS)),
 				{ flags: 'a' },
 			),
 		};
@@ -169,6 +169,14 @@ export default class Downloader {
 	}
 
 	// #region Getters
+
+	public static getProfiles(): string[] {
+		return this._profiles;
+	}
+
+	public static getOutputFilename(dataType: EData): string {
+		return OUTPUT_FILENAMES[dataType];
+	}
 
 	public static async getUserData(username: string): Promise<IUserData> {
 		if (this._userData[username]) {
@@ -369,7 +377,9 @@ export default class Downloader {
 		const followingsRequests = followings / LIMIT_USERS;
 		const tweetsPerHour = 4 * RATE_LIMIT_TWEETS * tokens;
 		const usersPerHour = (4 * RATE_LIMIT_USERS * tokens);
-		this._log('estimation', 'Tweets', `(${tweets}) ${(tweetsRequests / tweetsPerHour).toFixed(3)} hours`);
+		if (this.isWorkerEnabled(EData.TWEETS)) {
+			this._log('estimation', 'Tweets', `(${tweets}) ${(tweetsRequests / tweetsPerHour).toFixed(3)} hours`);
+		}
 		if (this.isWorkerEnabled(EData.FOLLOWERS)) {
 			this._log('estimation', 'Followers', `(${followers}) ${(followersRequests / usersPerHour).toFixed(3)} hours`);
 		}
