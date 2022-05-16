@@ -57,9 +57,11 @@ File | Description
 `tweets.csv` | Latest tweets of the users.
 `followers.csv` | The followers of the users.
 `followers.nsd.csv` | Calculated normalized social distance for followers.
+`followers.affinity.csv` | Calculated affinity for followers.
 `followings.csv` | Followings of the users.
 `followings.nsd.csv` | Calculated normalized social distance for followings.
-`friends.csv` | Users following each other.
+`followings.affinity.csv` | Calculated affinity for followings.
+`friends.csv` | Users following each other. It's not create if one of user workers `followers`, `followings` is disabled.
 
 ## Docker
 The [image](https://github.com/zabkwak/mat-twitter-downloader/pkgs/container/mat-twitter-downloader) is stored in GitHub packages registry and the app can be run in the docker environment.

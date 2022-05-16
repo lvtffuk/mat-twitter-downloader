@@ -76,6 +76,13 @@ export default class NormalizedSocialDistance {
 		ws.close();
 	}
 
+	/**
+	 * Calculates the normalized social distance for two profiles from users (followers, following) of those profiles.
+	 *
+	 * @param fx Sum of users of the profile.
+	 * @param fy Sum of users of the profile to compare.
+	 * @param fi Sum of common users.
+	 */
 	private static _calculateNormalizedSocialDistance(fx: number, fy: number, fi: number): number {
 		return (Math.max(Math.log(fx), Math.log(fy)) - Math.log(fi))
 			/
