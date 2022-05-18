@@ -23,4 +23,7 @@ module.exports = {
 	userCount: process.env.USER_COUNT
 		? parseInt(process.env.USER_COUNT, 10)
 		: 500000,
+	affinity: process.env.AFFINITY
+		? !!parseInt(process.env.AFFINITY, 10)
+		: false,
 };

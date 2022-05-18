@@ -1,6 +1,7 @@
 import BetterQueue from 'better-queue';
 import config from 'config';
 import { createWriteStream, promises as fs, WriteStream } from 'fs';
+import { uniq } from 'lodash';
 import { sleep } from 'mat-utils';
 import { createClient, RedisClientType } from 'redis';
 import App from './app';
@@ -65,6 +66,7 @@ export default class Downloader {
 	};
 
 	public static async init(): Promise<void> {
+		this._log('init', config);
 		await Promise.all([
 			this._connectRedis(),
 			this._validateTokens(),
@@ -89,6 +91,10 @@ export default class Downloader {
 		};
 	}
 
+	public static isAffinityEnabled(): boolean {
+		return config.get('affinity');
+	}
+
 	public static isWorkerEnabled(worker: EData): boolean {
 		return this.getWorkers().includes(worker);
 	}
@@ -102,10 +108,27 @@ export default class Downloader {
 
 	public static async start(): Promise<void> {
 		await Promise.all([
-			this._startQueue(EData.TWEETS, TweetsWorker),
-			this._startQueue(EData.FOLLOWERS, FollowersWorker),
-			this._startQueue(EData.FOLLOWINGS, FollowingsWorker),
+			this._startQueue(EData.TWEETS, this._profiles, TweetsWorker),
+			this._startQueue(EData.FOLLOWERS, this._profiles, FollowersWorker),
+			this._startQueue(EData.FOLLOWINGS, this._profiles, FollowingsWorker),
 		]);
+		if (this.isWorkerEnabled(EData.FOLLOWERS) && this.isAffinityEnabled()) {
+			this._log('affinity', 'Downloading affinity data.');
+			const followers: string[] = await CSV.readFile(
+				this.getOutDirPath(this.getOutputFilename(EData.FOLLOWERS)),
+				false,
+				(row) => row['3'],
+			);
+			await this._startQueue(
+				EData.FOLLOWINGS,
+				uniq(followers),
+				FollowingsWorker,
+				undefined,
+				true,
+			);
+		} else if (this.isAffinityEnabled()) {
+			Logger.warn('affinity', 'The affinity cannot be downloaded if the followings worker is disabled.')
+		}
 	}
 
 	public static async exit(): Promise<void> {
@@ -139,6 +162,7 @@ export default class Downloader {
 				userData.pagination[key] = nextToken;
 			}
 		} else if (userData.pagination[key] !== null) {
+			// Mark the pagination as finished
 			userData.pagination[key] = null;
 		}
 		if (userData.done[key]) {
@@ -266,12 +290,23 @@ export default class Downloader {
 			.on('error', console.error);
 	}
 
+	/**
+	 * Starts the worker queue.
+	 *
+	 * @param dataType Type of data to download.
+	 * @param profiles List of profiles to enqueue.
+	 * @param Worker Worker to execute.
+	 * @param transformWorkerData Function to transform worker input params.
+	 * @param forceRun Indicates if the queue should start even if the data type is ignored.
+	 */
 	private static async _startQueue<T extends IBaseWorkerData>(
 		dataType: EData,
+		profiles: string[],
 		Worker: new (data: T) => BaseWorker<T>,
 		transformWorkerData: (username: string) => T = (username) => ({ username } as T),
+		forceRun: boolean = false,
 	): Promise<void> {
-		if (!this.isWorkerEnabled(dataType)) {
+		if (!this.isWorkerEnabled(dataType) && !forceRun) {
 			this._log('worker', dataType, 'DISABLED');
 			return;
 		}
@@ -279,7 +314,13 @@ export default class Downloader {
 		return new Promise((resolve, reject) => {
 			queue
 				.on('drain', async () => {
-					await sleep(1000);
+					// TODO check locked profiles
+					/*
+					if (this._isStillDownloading()) {
+						return;
+					}
+					*/
+					await sleep(5000);
 					// @ts-ignore
 					if (queue.length > 0) {
 						return;
@@ -287,7 +328,7 @@ export default class Downloader {
 					resolve();
 				})
 				.on('error', reject);
-			for (const username of this._profiles) {
+			for (const username of profiles) {
 				this.enqueue(new Worker(transformWorkerData(username)));
 			}
 		});
@@ -401,6 +442,21 @@ export default class Downloader {
 		transformRow: (row: any) => T = (row) => row,
 	): Promise<T[]> {
 		return CSV.readFile(path, true, transformRow);
+	}
+
+	private static _isStillDownloading(): boolean {
+		const workers = this.getWorkers();
+		if (this.isAffinityEnabled() && !this.isWorkerEnabled(EData.FOLLOWINGS)) {
+			workers.push(EData.FOLLOWINGS);
+		}
+		for (const userData of Object.values(this._userData)) {
+			for (const worker of workers) {
+				if (userData.pagination[worker] !== null) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static _log(tag: string, ...data: any[]): void {

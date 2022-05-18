@@ -15,7 +15,7 @@ import { EData } from './typings/enums';
 		for (const typeData of [EData.FOLLOWERS, EData.FOLLOWINGS]) {
 			if (Downloader.isWorkerEnabled(typeData)) {
 				await NormalizedSocialDistance.createMap(typeData);
-				await Affinity.create(typeData);
+				// await Affinity.create(typeData);
 			}
 		}
 	} catch (error) {

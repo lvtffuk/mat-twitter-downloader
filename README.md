@@ -17,11 +17,15 @@ Variable | Description | Required | Default value
 `PROFILES_FILE_PATH` | The filepath of the `csv` file with profile list. | :heavy_check_mark: | 
 `OUT_DIR` | The directory where the output is stored. | :heavy_check_mark: | 
 `WORKERS` | Worker names separated by commas. Possible values: `tweets`, `followers`, `followings` | :x: |
+`AFFINITY` | Indicates if the affinity of followers should be calculated. For affinity `followers` worker must be enabled. | :x: | `0`
 `CSV_SEPARATOR` | The separator of the input `csv` files. | :x: | `;`
 `WORKER_CONCURRENCY` | The count of parallel runs of the downloading ads archive. | :x: | `5`
 `CLEAR` | Indicates if the output dir should be cleared before the run. All downloads are starting again. | :x: | `0`
 `USER_COUNT` | Total count of user on the twitter segment. | :x: | `500000`
 `IGNORE_USERS` | Indicates if the app should download only tweets. **DEPRECATED** Equivalent of `WORKERS=tweets` | :x: | `0`
+
+### Affinity
+If the affinity is enabled followings of followers are downloaded in the downloading process. It can download thousands of following users for one profile.
 
 ## Input files
 ### Twitter tokens
