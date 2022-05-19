@@ -1,3 +1,4 @@
+import { Logger } from 'mat-utils';
 import { TweetV2UserTimelineResult, TwitterApiReadOnly } from 'twitter-api-v2';
 import { LIMIT_TWEETS } from '../constants';
 import Downloader from '../downloader';
@@ -18,6 +19,10 @@ export default class TweetsWorker extends BaseWorker<IData> {
 		const { username } = data;
 		const userData = await Downloader.getUserData(username);
 		if (userData.pagination[this.getDataType()] === null) {
+			return;
+		}
+		if (userData.protected) {
+			Logger.warn('worker', `${username} protected.`);
 			return;
 		}
 		const timeline = await client.v2.userTimeline(

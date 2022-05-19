@@ -1,76 +1,89 @@
-import config from 'config';
 import { createWriteStream } from 'fs';
-import { intersection } from 'lodash';
+import {promises as fs} from 'fs';
 import { CSV, Logger } from 'mat-utils';
+import Config from './config';
+import Data from './data';
 import Downloader from './downloader';
-import { EData } from './typings/enums';
 
 interface IAffinityItem {
 	username: string;
 	followers: number;
+	followings: number;
 	followersInDataset: number;
 	affinity: number;
 }
 
-const USER_COUNT: number = config.get('userCount');
-
 export default class Affinity {
 
-	public static async create(typeData: EData): Promise<void> {
-		Logger.log('affinity', `Creating affinity of ${typeData}`);
-		const map = await this._getMap(typeData);
-		const affinities = this._calculateAffinity(map);
-		await this._save(typeData, affinities);
-	}
-
-	private static async _getMap(typeData: EData): Promise<Record<string, string[]>> {
-		const map: Record<string, string[]> = {};
-		await CSV.readFile(
-			Downloader.getOutDirPath(Downloader.getOutputFilename(typeData)),
-			false,
-			(row) => {
-				const username = row['1'];
-				const fUser = row['3'];
-				if (!map[username]) {
-					map[username] = [];
+	public static async calculate(): Promise<void> {
+		Logger.log('affinity', `Calculating.`);
+		await this._createAffinitiesDir();
+		for (const username of Downloader.getProfiles()) {
+			Logger.log('affinity', `Preparing followers of ${username}.`);
+			const followers = await Data.getFollowersOf(username);
+			const map = await Data.mapFollowings(followers);
+			const counts: Record<string, number> = {};
+			let count: number = 0;
+			for (const followings of Object.values(map)) {
+				count += followings.length;
+				for (const f of followings) {
+					if (counts[f]) {
+						counts[f]++;
+					} else {
+						counts[f] = 1;
+					}
 				}
-				map[username].push(fUser);
 			}
-		);
-		return map;
+			const minimalPercents = Math.round(followers.length / Config.affinityFollowingThreshold);
+			const affinityList = Object.entries(counts)
+				.filter(([, value]) => value >= minimalPercents)
+				.map(([key, value]) => {
+					return { username: key, count: value };
+				})
+				.sort((a, b) => b.count - a.count);
+			const affinities: IAffinityItem[] = [];
+			for (const affinityUser of affinityList) {
+				if (affinityUser.username === username) {
+					continue;
+				}
+				Logger.log('affinity', `Calculating ${affinityUser.username}.`);
+				const info = await Data.getProfileInfo(affinityUser.username);
+				const affinity = (affinityUser.count / followers.length) / (info.count.followers / Config.userCount);
+				affinities.push({
+					username: affinityUser.username,
+					followers: followers.length,
+					followings: affinityUser.count,
+					followersInDataset: info.count.followers,
+					affinity,
+				});
+			}
+			affinities.sort((a, b) => b.affinity - a.affinity);
+			await this._save(username, affinities);
+			Logger.log('affinity', `${username} done.`);
+		}
 	}
 
-	private static _calculateAffinity(map: Record<string, string[]>): IAffinityItem[] {
-		const dataset = Downloader.getProfiles();
-		return Downloader.getProfiles().map((username) => {
-			const followers = map[username];
-			const followersInDataset = intersection(dataset, followers).length;
-			const followersRatio = followers.length / USER_COUNT;
-			const followersInDatasetRatio = followersInDataset / dataset.length;
-			const affinity = followersInDatasetRatio / followersRatio;
-			// console.log(profile, { followersInDataset, followersRatio, followersInDatasetRatio, affinity });
-			return {
-				username,
-				followers: followers.length,
-				followersInDataset,
-				affinity,
-			};
-		});
-	}
-
-	private static async _save(typeData: EData, affinities: IAffinityItem[]): Promise<void> {
-		const filename = `${typeData}.affinity.csv`;
+	private static async _save(username: string, affinities: IAffinityItem[]): Promise<void> {
+		const filename = `affinities/${username}.csv`;
 		const ws = createWriteStream(
 			Downloader.getOutDirPath(filename),
 			{ flags: 'w' },
 		);
-		ws.write(CSV.toCSVRow('username', 'followers count', 'followers in dataset count', 'affinity'));
+		ws.write(CSV.toCSVRow('username', 'followers count', 'followings count', 'followers in dataset count', 'affinity'));
 		ws.write('\n');
 		for (const item of affinities) {
-			ws.write(CSV.toCSVRow(item.username, item.followers, item.followersInDataset, item.affinity));
+			ws.write(CSV.toCSVRow(item.username, item.followers, item.followings, item.followersInDataset, item.affinity));
 			ws.write('\n');
 		}
 		ws.end();
 		ws.close();
+	}
+
+	private static async _createAffinitiesDir(): Promise<void> {
+		try {
+			await fs.access(Downloader.getOutDirPath('affinities'));
+		} catch (error) {
+			await fs.mkdir(Downloader.getOutDirPath('affinities'));
+		}
 	}
 }

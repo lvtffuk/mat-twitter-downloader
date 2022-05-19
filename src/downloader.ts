@@ -24,6 +24,11 @@ interface ITokenRow {
 export interface IUserData {
 	id: string;
 	username: string;
+	description: string;
+	profilePictureUrl: string;
+	protected: boolean;
+	createdTime: string;
+	saveTime: string;
 	pagination: Partial<Record<EData, string>>;
 	count: Record<string, number>;
 	done: Partial<Record<EData, number>>;
@@ -73,6 +78,7 @@ export default class Downloader {
 			this._validateProfiles(),
 			this._validateOutputDir(),
 			this._createTmpDir(),
+			this._createProfilesDir(),
 			this._clear(),
 		]);
 		this._writeStreams = {
@@ -89,6 +95,10 @@ export default class Downloader {
 				{ flags: 'a' },
 			),
 		};
+	}
+
+	public static isAffinityCalculable(): boolean {
+		return this.isWorkerEnabled(EData.FOLLOWERS) && this.isAffinityEnabled();
 	}
 
 	public static isAffinityEnabled(): boolean {
@@ -112,7 +122,7 @@ export default class Downloader {
 			this._startQueue(EData.FOLLOWERS, this._profiles, FollowersWorker),
 			this._startQueue(EData.FOLLOWINGS, this._profiles, FollowingsWorker),
 		]);
-		if (this.isWorkerEnabled(EData.FOLLOWERS) && this.isAffinityEnabled()) {
+		if (this.isAffinityCalculable()) {
 			this._log('affinity', 'Downloading affinity data.');
 			const followers: string[] = await CSV.readFile(
 				this.getOutDirPath(this.getOutputFilename(EData.FOLLOWERS)),
@@ -127,7 +137,7 @@ export default class Downloader {
 				true,
 			);
 		} else if (this.isAffinityEnabled()) {
-			Logger.warn('affinity', 'The affinity cannot be downloaded if the followings worker is disabled.')
+			Logger.warn('affinity', 'The affinity cannot be downloaded if the followings worker is disabled.');
 		}
 	}
 
@@ -210,13 +220,20 @@ export default class Downloader {
 			return JSON.parse((await fs.readFile(this.getUserDataPath(username))).toString());
 		} catch (error) {
 			const client = (await this.getApp(EData.TWEETS)).getClient();
-			const { data } = await client.v2.userByUsername(username);
+			const { data } = await client.v2.userByUsername(username, {
+				'user.fields': ['description', 'created_at', 'profile_image_url', 'protected'],
+			});
 			const { data: showData } = await client.v2.user(data.id, {
 				'user.fields': ['public_metrics'],
 			});
 			const userData: IUserData = {
 				id: data.id,
 				username,
+				description: data.description || null,
+				createdTime: new Date(data.created_at).toISOString(),
+				saveTime: new Date().toISOString(),
+				profilePictureUrl: data.profile_image_url || null,
+				protected: data.protected || false,
 				pagination: {},
 				count: {
 					tweets: showData.public_metrics?.tweet_count || 0,
@@ -245,7 +262,7 @@ export default class Downloader {
 	}
 
 	public static getUserDataPath(username: string): string {
-		return `${TMP_DIR}/${username}-data.json`;
+		return `${this.getOutDirPath('profiles')}/${username}-data.json`;
 	}
 
 	/** @deprecated */
@@ -314,12 +331,9 @@ export default class Downloader {
 		return new Promise((resolve, reject) => {
 			queue
 				.on('drain', async () => {
-					// TODO check locked profiles
-					/*
 					if (this._isStillDownloading()) {
 						return;
 					}
-					*/
 					await sleep(5000);
 					// @ts-ignore
 					if (queue.length > 0) {
@@ -369,6 +383,14 @@ export default class Downloader {
 			await fs.access(TMP_DIR);
 		} catch (error) {
 			await fs.mkdir(TMP_DIR);
+		}
+	}
+
+	private static async _createProfilesDir(): Promise<void> {
+		try {
+			await fs.access(this.getOutDirPath('profiles'));
+		} catch (error) {
+			await fs.mkdir(this.getOutDirPath('profiles'));
 		}
 	}
 
@@ -445,11 +467,14 @@ export default class Downloader {
 	}
 
 	private static _isStillDownloading(): boolean {
-		const workers = this.getWorkers();
+		const workers = [...this.getWorkers()];
 		if (this.isAffinityEnabled() && !this.isWorkerEnabled(EData.FOLLOWINGS)) {
 			workers.push(EData.FOLLOWINGS);
 		}
 		for (const userData of Object.values(this._userData)) {
+			if (userData.protected) {
+				continue;
+			}
 			for (const worker of workers) {
 				if (userData.pagination[worker] !== null) {
 					return true;

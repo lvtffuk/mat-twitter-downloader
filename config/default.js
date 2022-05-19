@@ -4,6 +4,15 @@ if (process.env.IGNORE_USERS) {
 } else if (process.env.WORKERS) {
 	workers = process.env.WORKERS.split(',');
 }
+
+const getNumericVar = (value, defaultValue = 0) => {
+	return value ? parseInt(value, 10) : defaultValue;
+};
+
+const getBooleanVar = (value) => {
+	return !!getNumericVar(value, 0);
+}
+
 module.exports = {
 	tokensFilePath: process.env.TOKENS_FILE_PATH,
 	outDir: process.env.OUT_DIR,
@@ -13,17 +22,10 @@ module.exports = {
 		host: process.env.REDIS_HOST,
 		port: process.env.REDIS_PORT || 6379,
 	} : null,
-	workerConcurrency: process.env.WORKER_CONCURRENCY
-		? parseInt(process.env.WORKER_CONCURRENCY, 10)
-		: 5,
-	clear: process.env.CLEAR
-		? !!parseInt(process.env.CLEAR, 10)
-		: false,
+	workerConcurrency: getNumericVar(process.env.WORKER_CONCURRENCY, 5),
+	clear: getBooleanVar(process.env.CLEAR),
 	workers,
-	userCount: process.env.USER_COUNT
-		? parseInt(process.env.USER_COUNT, 10)
-		: 500000,
-	affinity: process.env.AFFINITY
-		? !!parseInt(process.env.AFFINITY, 10)
-		: false,
+	userCount: getNumericVar(process.env.USER_COUNT, 500000),
+	affinity: getBooleanVar(process.env.AFFINITY),
+	affinityFollowingThreshold: getNumericVar(process.env.AFFINITY_FOLLOWING_THRESHOLD, 10),
 };
