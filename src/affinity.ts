@@ -34,7 +34,7 @@ export default class Affinity {
 					}
 				}
 			}
-			const minimalPercents = Math.round(followers.length / Config.affinityFollowingThreshold);
+			const minimalPercents = Math.round(followers.length * (Config.affinityFollowingThreshold / 100));
 			const affinityList = Object.entries(counts)
 				.filter(([, value]) => value >= minimalPercents)
 				.map(([key, value]) => {
