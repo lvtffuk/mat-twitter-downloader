@@ -219,6 +219,7 @@ export default class Downloader {
 		try {
 			return JSON.parse((await fs.readFile(this.getUserDataPath(username))).toString());
 		} catch (error) {
+			Logger.log('downloader', `Downloading profile info of ${username}.`);
 			const client = (await this.getApp(EData.TWEETS)).getClient();
 			const { data } = await client.v2.userByUsername(username, {
 				'user.fields': ['description', 'created_at', 'profile_image_url', 'protected'],
