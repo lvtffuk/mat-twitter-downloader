@@ -21,6 +21,7 @@ import { EData } from './typings/enums';
 		}
 		if (Downloader.isAffinityCalculable()) {
 			await Affinity.calculate();
+			await NormalizedSocialDistance.createMapFromAffinityData();
 		}
 		Logger.log('process', 'Finished.');
 	} catch (error) {

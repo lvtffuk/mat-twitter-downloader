@@ -2,6 +2,7 @@ import config from 'config';
 import { createWriteStream } from 'fs';
 import { intersection } from 'lodash';
 import { CSV, Logger } from 'mat-utils';
+import Data from './data';
 import Downloader from './downloader';
 import { EData } from './typings/enums';
 
@@ -10,10 +11,21 @@ const USER_COUNT: number = config.get('userCount');
 export default class NormalizedSocialDistance {
 
 	public static async createMap(typeData: EData): Promise<void> {
-		Logger.log('normalized-social-distance', `Creating NSD map of ${typeData}`);
+		Logger.log('normalized-social-distance', `Creating NSD map of ${typeData}.`);
 		const map: Record<string, string[]> = await this._getMap(typeData);
-		const distances: Record<string, number> = this._calculateDistances(map);
-		await this._save(typeData, distances);
+		const distances: Record<string, number> = this._calculateDistances(map, Downloader.getProfiles());
+		await this._save(typeData, distances, Downloader.getProfiles());
+	}
+
+	public static async createMapFromAffinityData(): Promise<void> {
+		Logger.log('normalized-social-distance', `Creating NSD maps of affinity data.`);
+		for (const username of Downloader.getProfiles()) {
+			Logger.log('affinity', `Creating NSD map of ${username}.`);
+			const followers = await Data.getFollowersOf(username);
+			const map = await Data.mapFollowings(followers);
+			const distances: Record<string, number> = this._calculateDistances(map, followers);
+			await this._save(`affinities/${username}`, distances, followers);
+		}
 	}
 
 	private static async _getMap(typeData: EData): Promise<Record<string, string[]>> {
@@ -33,27 +45,27 @@ export default class NormalizedSocialDistance {
 		return map;
 	}
 
-	private static _calculateDistances(map: Record<string, string[]>): Record<string, number> {
+	private static _calculateDistances(map: Record<string, string[]>, usernames: string[]): Record<string, number> {
 		const distances: Record<string, number> = {};
-		const profiles = [...Downloader.getProfiles()];
+		const profiles = [...usernames];
 		while (profiles.length) {
 			const username = profiles.shift();
-			const fx = map[username].length;
+			const fx = map[username]?.length || 0;
 			for (const nextUsername of profiles) {
 				const key = this._getUsernameKey(username, nextUsername);
-				const fy = map[nextUsername].length;
-				const fi = intersection(map[username], map[nextUsername]).length;
+				const fy = map[nextUsername]?.length || 0;
+				const fi = intersection(map[username] || [], map[nextUsername] || []).length;
 				distances[key] = this._calculateNormalizedSocialDistance(fx, fy, fi);
 			}
 		}
 		return distances;
 	}
 
-	private static async _save(typeData: EData, distances: Record<string, number>): Promise<void> {
-		const rows: string[] = [CSV.toCSVRow('', ...Downloader.getProfiles())];
-		for (const profile of Downloader.getProfiles()) {
+	private static async _save(filename: string, distances: Record<string, number>, usernames: string[]): Promise<void> {
+		const rows: string[] = [CSV.toCSVRow('', ...usernames)];
+		for (const profile of usernames) {
 			const rowData: any[] = [profile];
-			for (const p of Downloader.getProfiles()) {
+			for (const p of usernames) {
 				if (profile === p) {
 					rowData.push('');
 					continue;
@@ -63,9 +75,9 @@ export default class NormalizedSocialDistance {
 			}
 			rows.push(CSV.toCSVRow(...rowData));
 		}
-		const filename = `${typeData}.nsd.csv`;
+		const f = `${filename}.nsd.csv`;
 		const ws = createWriteStream(
-			Downloader.getOutDirPath(filename),
+			Downloader.getOutDirPath(f),
 			{ flags: 'w' },
 		);
 		for (const row of rows) {
