@@ -212,7 +212,7 @@ export default class Downloader {
 		return OUTPUT_FILENAMES[dataType];
 	}
 
-	public static async getUserData(username: string): Promise<IUserData> {
+	public static async getUserData(username: string, handleRateLimit: boolean = false): Promise<IUserData> {
 		if (this._userData[username]) {
 			return this._userData[username];
 		}
@@ -220,32 +220,41 @@ export default class Downloader {
 			return JSON.parse((await fs.readFile(this.getUserDataPath(username))).toString());
 		} catch (error) {
 			Logger.log('downloader', `Downloading profile info of ${username}.`);
-			const client = (await this.getApp(EData.TWEETS)).getClient();
-			const { data } = await client.v2.userByUsername(username, {
-				'user.fields': ['description', 'created_at', 'profile_image_url', 'protected'],
-			});
-			const { data: showData } = await client.v2.user(data.id, {
-				'user.fields': ['public_metrics'],
-			});
-			const userData: IUserData = {
-				id: data.id,
-				username,
-				description: data.description || null,
-				createdTime: new Date(data.created_at).toISOString(),
-				saveTime: new Date().toISOString(),
-				profilePictureUrl: data.profile_image_url || null,
-				protected: data.protected || false,
-				pagination: {},
-				count: {
-					tweets: showData.public_metrics?.tweet_count || 0,
-					followers: showData.public_metrics?.followers_count || 0,
-					followings: showData.public_metrics?.following_count || 0,
-					listed: showData.public_metrics?.listed_count || 0,
-				},
-				done: {},
-			};
-			await this.updateUserData(username, userData);
-			return userData;
+			const app = await this.getApp(EData.TWEETS);
+			const client = app.getClient();
+			try {
+				const { data } = await client.v2.userByUsername(username, {
+					'user.fields': ['description', 'created_at', 'profile_image_url', 'protected'],
+				});
+				const { data: showData } = await client.v2.user(data.id, {
+					'user.fields': ['public_metrics'],
+				});
+				const userData: IUserData = {
+					id: data.id,
+					username,
+					description: data.description || null,
+					createdTime: new Date(data.created_at).toISOString(),
+					saveTime: new Date().toISOString(),
+					profilePictureUrl: data.profile_image_url || null,
+					protected: data.protected || false,
+					pagination: {},
+					count: {
+						tweets: showData.public_metrics?.tweet_count || 0,
+						followers: showData.public_metrics?.followers_count || 0,
+						followings: showData.public_metrics?.following_count || 0,
+						listed: showData.public_metrics?.listed_count || 0,
+					},
+					done: {},
+				};
+				await this.updateUserData(username, userData);
+				return userData;
+			} catch (e) {
+				if (handleRateLimit && e.code === 429) {
+					app.lock(EData.TWEETS, new Date(e.rateLimit.reset * 1000));
+					return await this.getUserData(username, handleRateLimit);
+				}
+				throw error;
+			}
 		}
 	}
 

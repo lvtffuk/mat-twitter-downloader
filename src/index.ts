@@ -1,5 +1,6 @@
-import { Logger } from 'mat-utils';
+import { CSV, Logger } from 'mat-utils';
 import Affinity from './affinity';
+import Config from './config';
 import Downloader from './downloader';
 import Friends from './friends';
 import NormalizedSocialDistance from './normalized-social-distance';
@@ -7,6 +8,7 @@ import { EData } from './typings/enums';
 
 (async () => {
 	Logger.log('process', 'Started.');
+	CSV.setSeparator(Config.csvSeparator);
 	try {
 		await Downloader.init();
 		await Downloader.start();

@@ -28,8 +28,8 @@ export default class Data {
 		return this._mapUsers(EData.FOLLOWINGS, usernames);
 	}
 
-	public static getProfileInfo(username: string): Promise<IUserData> {
-		return Downloader.getUserData(username);
+	public static getProfileInfo(username: string, handleRateLimit: boolean = false): Promise<IUserData> {
+		return Downloader.getUserData(username, handleRateLimit);
 	}
 
 	private static _getUsers(typeData: EData): Promise<string[]> {

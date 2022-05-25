@@ -83,7 +83,9 @@ CSV files except affinity and nsd files are saved without headers.
 The directory contains `json` files for each of the profile which is analyzed in the downloading process. 
 
 ### Affinities
-The directory contains `csv` files of affinities for analyzed profiles. Per each user the `[username].csv` file is created. In addition normalized social distance is calculated for the followers. Per each user the `[username].nsd.csv` file is created.
+The directory contains `csv` files of affinities for analyzed profiles. For each user the `[username].csv` file is created and the matrix of affinity users as `[username].matrix.csv`.
+
+In addition normalized social distance is calculated for the followers. For each user the `[username].nsd.csv` file is created.
 
 ### Normalized social distance
 Normalized social distance (NSD) needs at least to profiles to analyze.
