@@ -107,3 +107,5 @@ docker run \
 ghcr.io/zabkwak/mat-twitter-downloader:latest  
 ```
 The volumes must be set for accessing input and output data.
+
+*This work was supported by the European Regional Development Fund-Project “Creativity and Adaptability as Conditions of the Success of Europe in an Interrelated World” (No. CZ.02.1.01/0.0/0.0/16_019/0000734)."*
