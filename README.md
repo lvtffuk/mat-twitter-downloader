@@ -4,7 +4,7 @@ Downloader for Twitter data for Media Analytics Tool project.
 ## Development
 ### Installation & test run
 ```bash
-git clone git@github.com:zabkwak/mat-twitter-downloader.git
+git clone git@github.com:lvtffuk/mat-twitter-downloader.git
 cd mat-twitter-downloader
 npm install
 npm start
@@ -91,9 +91,9 @@ In addition normalized social distance is calculated for the followers. For each
 Normalized social distance (NSD) needs at least to profiles to analyze.
 
 ## Docker
-The [image](https://github.com/zabkwak/mat-twitter-downloader/pkgs/container/mat-twitter-downloader) is stored in GitHub packages registry and the app can be run in the docker environment.
+The [image](https://github.com/lvtffuk/mat-twitter-downloader/pkgs/container/mat-twitter-downloader) is stored in GitHub packages registry and the app can be run in the docker environment.
 ```bash
-docker pull ghcr.io/zabkwak/mat-twitter-downloader:latest
+docker pull ghcr.io/lvtffuk/mat-twitter-downloader:latest
 ```
 
 ```bash
@@ -104,7 +104,7 @@ docker run \
 -e 'OUT_DIR=./output' \
 -v '/absolute/path/to/output/dir:/usr/src/app/output' \
 -v '/absolute/path/to/input/dir:/usr/src/app/input' \
-ghcr.io/zabkwak/mat-twitter-downloader:latest  
+ghcr.io/lvtffuk/mat-twitter-downloader:latest  
 ```
 The volumes must be set for accessing input and output data.
 

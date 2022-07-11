@@ -15,6 +15,6 @@ ENV NODE_ENV=production
 ENV PORT=8080
 COPY --from=build /usr/src /usr/src
 # connect the repository to the container
-LABEL org.opencontainers.image.source https://github.com/zabkwak/mat-twitter-downloader
+LABEL org.opencontainers.image.source https://github.com/lvtffuk/mat-twitter-downloader
 EXPOSE 8080
 CMD [ "node", "index.js" ]
